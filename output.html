@@ -1,0 +1,976 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>yeu minh anh</title>
+<link rel="stylesheet"
+href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<style>
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+body{
+    background:#0f0f0f;
+    color:white;
+    font-family:Arial;
+    min-height:100vh;
+    padding:25px;
+}
+
+.container{
+    max-width:1300px;
+    margin:auto;
+}
+
+.top{
+    text-align:center;
+    margin-bottom:25px;
+}
+
+.top h1{
+    font-size:40px;
+    margin-bottom:10px;
+}
+
+.top p{
+    color:#999;
+}
+
+.panel{
+    background:#1b1b1b;
+    padding:20px;
+    border-radius:20px;
+    border:1px solid #2a2a2a;
+}
+
+.search{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+}
+
+.search input{
+    flex:1;
+}
+
+.search input,
+.search select,
+.search button{
+    border:none;
+    padding:15px;
+    border-radius:14px;
+    font-size:16px;
+}
+
+.search input,
+.search select{
+    background:#252525;
+    color:white;
+}
+
+.search button{
+    background:#00ff88;
+    color:black;
+    font-weight:bold;
+    cursor:pointer;
+}
+
+.search button:hover{
+    opacity:.9;
+}
+
+.profile{
+    margin-top:25px;
+    display:flex;
+    gap:20px;
+    align-items:center;
+    background:#222;
+    border-radius:20px;
+    padding:20px;
+}
+
+.profile img{
+    width:110px;
+    height:110px;
+    border-radius:50%;
+    object-fit:cover;
+    border:4px solid #00ff88;
+}
+
+.stats{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    margin-top:15px;
+}
+
+.stat{
+    background:#2d2d2d;
+    padding:10px 14px;
+    border-radius:12px;
+    font-size:14px;
+}
+
+.grid{
+    margin-top:25px;
+    display:grid;
+    grid-template-columns:
+    repeat(auto-fill,minmax(320px,1fr));
+    gap:20px;
+}
+
+.card{
+    background:#1f1f1f;
+    border-radius:20px;
+    overflow:hidden;
+    border:1px solid #2b2b2b;
+    transition:.2s;
+}
+
+.card:hover{
+    transform:translateY(-4px);
+}
+
+.thumb{
+    width:100%;
+    height:500px;
+    object-fit:cover;
+    background:black;
+}
+
+.info{
+    padding:15px;
+}
+
+.title2{
+    font-size:15px;
+    margin-bottom:10px;
+}
+
+.meta{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    margin-top:12px;
+}
+
+.meta span{
+    background:#2a2a2a;
+    padding:8px 12px;
+    border-radius:10px;
+    font-size:13px;
+}
+
+.actions{
+    margin-top:15px;
+    display:flex;
+    gap:10px;
+}
+
+.actions button,
+.actions a{
+    flex:1;
+    text-align:center;
+    text-decoration:none;
+    border:none;
+    padding:12px;
+    border-radius:12px;
+    font-weight:bold;
+    cursor:pointer;
+}
+
+.watch{
+    background:#00ff88;
+    color:black;
+}
+
+.download{
+    background:#333;
+    color:white;
+}
+
+.loading{
+    text-align:center;
+    padding:50px;
+    font-size:20px;
+}
+
+.modal{
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,.85);
+    display:none;
+    justify-content:center;
+    align-items:center;
+    z-index:9999;
+}
+
+.modal-content{
+    width:90%;
+    max-width:800px;
+    background:#181818;
+    border-radius:20px;
+    overflow:hidden;
+}
+
+.modal-top{
+    display:flex;
+    justify-content:flex-end;
+    padding:10px;
+}
+
+.close{
+    background:red;
+    border:none;
+    color:white;
+    width:40px;
+    height:40px;
+    border-radius:50%;
+    cursor:pointer;
+}
+
+video{
+    width:100%;
+    max-height:85vh;
+    background:black;
+}
+
+.empty{
+    text-align:center;
+    color:#999;
+    margin-top:50px;
+}
+#lockScreen{
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,.92);
+    backdrop-filter:blur(8px);
+    z-index:999999;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+}
+
+.lock-box{
+    width:340px;
+    background:#1b1b1b;
+    border:1px solid #2b2b2b;
+    border-radius:24px;
+    padding:30px;
+    text-align:center;
+    box-shadow:
+    0 0 40px rgba(0,0,0,.5);
+}
+
+.lock-icon{
+    font-size:55px;
+    color:#00ff88;
+    margin-bottom:20px;
+}
+
+.lock-box h2{
+    margin-bottom:20px;
+}
+
+.lock-box input{
+    width:100%;
+    padding:15px;
+    border:none;
+    border-radius:14px;
+    background:#252525;
+    color:white;
+    margin-bottom:15px;
+    font-size:16px;
+}
+
+.lock-box button{
+    width:100%;
+    padding:15px;
+    border:none;
+    border-radius:14px;
+    background:#00ff88;
+    color:black;
+    font-weight:bold;
+    cursor:pointer;
+    font-size:16px;
+}
+
+.lock-box button:hover{
+    opacity:.9;
+}
+
+#keyStatus{
+    margin-top:15px;
+    font-size:14px;
+    color:#999;
+}
+</style>
+</head>
+<body>
+    <!-- LOCK SCREEN -->
+
+<div id="lockScreen">
+
+    <div class="lock-box">
+
+        <i class="fa-solid fa-lock lock-icon"></i>
+
+        <h2>
+            Enter License Key
+        </h2>
+
+        <input
+        type="text"
+        id="licenseKey"
+        placeholder="Enter your key">
+
+        <button onclick="checkKey()">
+            Unlock
+        </button>
+
+        <div id="keyStatus"></div>
+
+    </div>
+
+</div>
+<div class="container">
+<div class="top">
+
+    <h1>
+        <i class="fa-brands fa-tiktok"></i>
+        check var super
+    </h1>
+
+    <p>
+        make by tamdeptrai312
+    </p>
+
+</div>
+
+<div class="panel">
+
+    <div class="search">
+
+        <input
+        id="username"
+        placeholder="Enter TikTok username">
+
+        <select id="mode">
+
+            <option value="videos">
+                Videos
+            </option>
+
+            <option value="reposts">
+                Reposts
+            </option>
+
+            <option value="stories">
+                Stories
+            </option>
+
+        </select>
+
+        <button onclick="loadData()">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            Search
+        </button>
+
+    </div>
+
+    <div id="profile"></div>
+
+    <div id="results" class="grid"></div>
+
+</div>
+
+</div>
+<div class="modal" id="modal">
+<div class="modal-content">
+
+    <div class="modal-top">
+
+        <button class="close"
+        onclick="closeVideo()">
+            X
+        </button>
+
+    </div>
+
+    <video
+    id="player"
+    controls
+    autoplay
+    playsinline>
+    </video>
+
+</div>
+
+</div>
+<script>
+const KEY_URL =
+"https://raw.githubusercontent.com/dangnguyenthe7-max/hidden/refs/heads/main/keysmart.txt";
+
+let unlocked = false;
+
+// LOCK UI
+
+function lockUI(){
+
+    unlocked = false;
+
+    document
+    .getElementById("lockScreen")
+    .style.display = "flex";
+}
+
+// UNLOCK UI
+
+function unlockUI(){
+
+    unlocked = true;
+
+    document
+    .getElementById("lockScreen")
+    .style.display = "none";
+}
+
+// CHECK KEY
+
+async function checkKey(){
+
+    const input =
+    document
+    .getElementById("licenseKey")
+    .value
+    .trim();
+
+    const status =
+    document
+    .getElementById("keyStatus");
+
+    if(!input){
+
+        status.innerHTML =
+        "Enter a key";
+
+        status.style.color =
+        "orange";
+
+        return;
+    }
+
+    try{
+
+        const res =
+        await fetch(KEY_URL);
+
+        const text =
+        await res.text();
+
+        const keys =
+        text
+        .split("\n")
+        .map(x => x.trim())
+        .filter(x => x);
+
+        if(keys.includes(input)){
+
+            unlockUI();
+
+            status.innerHTML =
+            "✅ Key valid";
+
+            status.style.color =
+            "#00ff88";
+
+            // SAVE KEY
+
+            localStorage.setItem(
+                "saved_key",
+                input
+            );
+
+            // SAVE LAST CHECK
+
+            localStorage.setItem(
+                "last_key_check",
+                Date.now()
+            );
+
+        }else{
+
+            status.innerHTML =
+            "❌ Invalid key";
+
+            status.style.color =
+            "red";
+
+            localStorage.removeItem(
+                "saved_key"
+            );
+
+            lockUI();
+        }
+
+    }catch(err){
+
+        status.innerHTML =
+        "Verification failed";
+
+        status.style.color =
+        "orange";
+    }
+}
+function format(x){
+
+    if(!x) return 0;
+
+    return x.toLocaleString();
+}
+
+// MULTI PROXY
+const proxies = [
+
+    url =>
+    "https://corsproxy.io/?" +
+    encodeURIComponent(url),
+
+    url =>
+    "https://cors-anywhere.herokuapp.com/" +
+    url,
+
+    url =>
+    "https://api.allorigins.win/raw?url=" +
+    encodeURIComponent(url)
+
+];
+
+async function api(endpoint, body){
+
+    const target =
+        "https://ttviewer.net" + endpoint;
+
+    let lastError;
+
+    for(const proxy of proxies){
+
+        try{
+
+            const res = await fetch(
+                proxy(target),
+                {
+                    method:"POST",
+                    headers:{
+                        "Content-Type":
+                        "application/json"
+                    },
+                    body:JSON.stringify(body)
+                }
+            );
+
+            const text =
+                await res.text();
+
+            try{
+
+                return JSON.parse(text);
+
+            }catch{
+
+                console.log(text);
+            }
+
+        }catch(err){
+
+            console.log(err);
+
+            lastError = err;
+        }
+    }
+
+    throw lastError;
+}
+
+function openVideo(url){
+
+    document
+    .getElementById("modal")
+    .style.display = "flex";
+
+    document
+    .getElementById("player")
+    .src = url;
+}
+
+function closeVideo(){
+
+    const player =
+    document.getElementById("player");
+
+    player.pause();
+
+    player.src = "";
+
+    document
+    .getElementById("modal")
+    .style.display = "none";
+}
+
+async function loadData(){
+
+    try{
+
+        const username =
+        document
+        .getElementById("username")
+        .value
+        .trim();
+
+        const mode =
+        document
+        .getElementById("mode")
+        .value;
+
+        if(!username){
+
+            alert("Enter username");
+            return;
+        }
+
+        const results =
+        document
+        .getElementById("results");
+
+        results.innerHTML =
+        `
+        <div class="loading">
+            <i class="fa-solid fa-spinner fa-spin"></i>
+            Loading...
+        </div>
+        `;
+
+        // PROFILE
+
+        const profileRes =
+        await api(
+            "/api/tiktok/get-profile",
+            {
+                unique_id:username
+            }
+        );
+
+        if(profileRes.code !== 0){
+
+            alert(
+                profileRes.msg ||
+                "Failed"
+            );
+
+            return;
+        }
+
+        const user =
+        profileRes.data.user;
+
+        const stats =
+        profileRes.data.stats;
+
+        document
+        .getElementById("profile")
+        .innerHTML = `
+
+        <div class="profile">
+
+            <img src="${
+                user.avatarLarger
+            }">
+
+            <div>
+
+                <h2>
+                    ${user.nickname}
+                </h2>
+
+                <div>
+                    @${user.uniqueId}
+                </div>
+
+                <div class="stats">
+
+                    <div class="stat">
+                        <i class="fa-solid fa-users"></i>
+                        ${format(stats.followerCount)}
+                    </div>
+
+                    <div class="stat">
+                        <i class="fa-solid fa-heart"></i>
+                        ${format(stats.heartCount)}
+                    </div>
+
+                    <div class="stat">
+                        <i class="fa-solid fa-video"></i>
+                        ${format(stats.videoCount)}
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+        `;
+
+        let endpoint = "";
+        let body = {};
+
+        if(mode === "videos"){
+
+            endpoint =
+            "/api/tiktok/get-videos";
+
+            body = {
+                secUid:user.secUid,
+                unique_id:user.uniqueId,
+                count:12,
+                cursor:0
+            };
+        }
+
+        if(mode === "reposts"){
+
+            endpoint =
+            "/api/tiktok/get-reposts";
+
+            body = {
+                secUid:user.secUid,
+                cursor:0,
+                count:12
+            };
+        }
+
+        if(mode === "stories"){
+
+            endpoint =
+            "/api/tiktok/get-story";
+
+            body = {
+                userId:user.id,
+                maxCursor:0
+            };
+        }
+
+        const data =
+        await api(endpoint, body);
+
+        let items = [];
+
+        if(mode === "stories"){
+
+            items =
+            data.itemList ||
+            data.data?.items ||
+            [];
+        }
+        else{
+
+            items =
+            data.data?.videos ||
+            data.data?.items ||
+            [];
+        }
+
+        // REMOVE DUPLICATES
+
+        const seen = new Set();
+
+        items = items.filter(x => {
+
+            const id =
+            x.aweme_id ||
+            x.video_id;
+
+            if(seen.has(id))
+                return false;
+
+            seen.add(id);
+
+            return true;
+        });
+
+        results.innerHTML = "";
+
+        if(items.length <= 0){
+
+            results.innerHTML =
+            `
+            <div class="empty">
+                No data found
+            </div>
+            `;
+
+            return;
+        }
+
+        items.forEach(item => {
+
+            const thumb =
+            item.origin_cover ||
+            item.cover ||
+            item.ai_dynamic_cover ||
+            "";
+
+            // wmplay thường chỉ có tiếng
+            // play mới có hình
+
+            const video =
+            item.play ||
+            item.wmplay ||
+            "";
+
+            const div =
+            document.createElement("div");
+
+            div.className = "card";
+
+            div.innerHTML = `
+
+            <img
+            class="thumb"
+            src="${thumb}">
+
+            <div class="info">
+
+                <div class="title2">
+                    ${
+                        item.title ||
+                        "No title"
+                    }
+                </div>
+
+                <div class="meta">
+
+                    <span>
+                        <i class="fa-solid fa-play"></i>
+                        ${format(item.play_count)}
+                    </span>
+
+                    <span>
+                        <i class="fa-solid fa-heart"></i>
+                        ${format(item.digg_count)}
+                    </span>
+
+                    <span>
+                        <i class="fa-solid fa-comment"></i>
+                        ${format(item.comment_count)}
+                    </span>
+
+                </div>
+
+                <div class="actions">
+
+                    <button
+                    class="watch"
+                    onclick='openVideo("${video}")'>
+
+                        <i class="fa-solid fa-play"></i>
+                        Watch
+
+                    </button>
+
+                    <a
+                    class="download"
+                    href="${video}"
+                    target="_blank">
+
+                        <i class="fa-solid fa-download"></i>
+                        Download
+
+                    </a>
+
+                </div>
+
+            </div>
+            `;
+
+            results.appendChild(div);
+
+        });
+
+    }catch(err){
+
+        console.error(err);
+
+        alert(
+            "Fetch failed\n\n" +
+            err
+        );
+    }
+}
+// AUTO LOAD KEY
+
+window.onload = async () => {
+
+    lockUI();
+
+    const savedKey =
+    localStorage.getItem(
+        "saved_key"
+    );
+
+    const lastCheck =
+    Number(
+        localStorage.getItem(
+            "last_key_check"
+        ) || 0
+    );
+
+    // 24 giờ
+    const DAY =
+    24 * 60 * 60 * 1000;
+
+    if(savedKey){
+
+        document
+        .getElementById("licenseKey")
+        .value = savedKey;
+
+        // Nếu quá 24h -> check lại
+
+        if(Date.now() - lastCheck > DAY){
+
+            await checkKey();
+
+        }else{
+
+            unlockUI();
+        }
+    }
+};
+
+// AUTO RECHECK EVERY 24H
+
+setInterval(async () => {
+
+    const savedKey =
+    localStorage.getItem(
+        "saved_key"
+    );
+
+    if(!savedKey)
+        return;
+
+    document
+    .getElementById("licenseKey")
+    .value = savedKey;
+
+    await checkKey();
+
+}, 24 * 60 * 60 * 1000);
+</script>
+</body>
+</html>

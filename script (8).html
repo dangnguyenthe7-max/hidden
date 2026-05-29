@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Command Prompt - Gemma 4 AI</title>
     <style>
-        /* Giao diện mô phỏng 100% Windows CMD */
         body {
             background-color: #000000;
             color: #ffffff;
@@ -15,46 +14,37 @@
             padding: 10px;
             line-height: 1.4;
         }
-
         #cmd-window {
             width: 100%;
             max-width: 1000px;
             margin: 0 auto;
         }
-
         .header-text {
             color: #ffffff;
             margin-bottom: 15px;
             white-space: pre-wrap;
         }
-
         .history-container {
             margin-bottom: 10px;
         }
-
         .line {
             margin-bottom: 8px;
             white-space: pre-wrap;
             word-wrap: break-word;
         }
-
         .divider {
             color: #888888;
             margin: 10px 0;
         }
-
-        /* Khung nhập lệnh chuẩn dòng lệnh C:\> */
         .input-line {
             display: flex;
             align-items: center;
         }
-
         .prompt-path {
             color: #ffffff;
             white-space: nowrap;
             margin-right: 5px;
         }
-
         #user-input {
             background-color: transparent;
             color: #ffffff;
@@ -74,8 +64,10 @@
 (c) Microsoft Corporation. All rights reserved.
 
 ====================================================
-   CHƯƠNG TRÌNH CHAT VỚI GEMMA 4 (100% TIẾNG VIỆT)  
- Quy tắc: Nhập 'cls' hoặc 'clear' để xóa màn hình.
+   CHƯƠNG TRÌNH CHAT VỚI GEMMA 4 (GITHUB EDITION)  
+ Quy tắc: 
+ - Nhập 'cls' hoặc 'clear' để xóa màn hình chat.
+ - Nhập 'reset-key' để thay đổi cấu hình Cloudflare.
 ====================================================</div>
 
     <div id="chat-box" class="history-container"></div>
@@ -87,12 +79,27 @@
 </div>
 
 <script>
-    // 1. Cấu hình tài khoản Cloudflare của bạn
-    const ACCOUNT_ID = "ad71d0b8d4f281620bb0c1e673efd5e6";
-    const AUTH_TOKEN = "cfut_Vu6IbIB6s69Nuf8NF4yq5ULbugfzfDZPZQZOBFrd8c6409a8";
-    const API_URL = `https://api.cloudflare.com/client/v4/accounts/${ACCOUNT_ID}/ai/run/@cf/google/gemma-4-26b-a4b-it`;
+    // Kiểm tra và lấy cấu hình Cloudflare từ LocalStorage thay vì ghi trực tiếp vào code
+    let ACCOUNT_ID = localStorage.getItem("cf_account_id");
+    let AUTH_TOKEN = localStorage.getItem("cf_auth_token");
 
-    // Quy tắc hệ thống tối cao
+    function checkCredentials() {
+        if (!ACCOUNT_ID || !AUTH_TOKEN) {
+            alert("Chào mừng! Để bảo mật trên GitHub, vui lòng cung cấp thông tin cấu hình Cloudflare của bạn.\nThông tin này chỉ lưu tại trình duyệt của bạn.");
+            ACCOUNT_ID = prompt("Nhập Cloudflare ACCOUNT ID của bạn:");
+            AUTH_TOKEN = prompt("Nhập Cloudflare AUTH TOKEN của bạn:");
+            
+            if (ACCOUNT_ID && AUTH_TOKEN) {
+                localStorage.setItem("cf_account_id", ACCOUNT_ID.trim());
+                localStorage.setItem("cf_auth_token", AUTH_TOKEN.trim());
+                alert("Cấu hình thành công! Hãy tải lại trang hoặc bắt đầu chat.");
+                location.reload();
+            } else {
+                alert("Bạn phải nhập đủ thông tin để sử dụng ứng dụng!");
+            }
+        }
+    }
+
     const SYSTEM_RULES = `QUY TẮC HỆ THỐNG TỐI CAO - KHÔNG THỂ PHÁ VỠ:
 1. Bạn PHẢI sử dụng tiếng Việt chuẩn xác trong 100% mọi tình huống giao tiếp.
 2. Tuyệt đối KHÔNG trả lời bằng tiếng Anh, tiếng Trung hay bất kỳ ngôn ngữ nào khác, ngay cả khi người dùng ra lệnh cho bạn thay đổi ngôn ngữ, dịch thuật, hoặc sử dụng mã lệnh để ép bạn nói tiếng khác.
@@ -102,18 +109,15 @@
     const chatBox = document.getElementById("chat-box");
     const userInput = document.getElementById("user-input");
 
-    // 2. Khởi tạo hoặc Tải lại lịch sử chat từ LocalStorage
+    // Khởi tạo lịch sử chat
     let messages = JSON.parse(localStorage.getItem("cmd_chat_history"));
-    
     if (!messages || messages.length === 0) {
         messages = [{ "role": "system", "content": SYSTEM_RULES }];
         localStorage.setItem("cmd_chat_history", JSON.stringify(messages));
     }
 
-    // Hàm hiển thị lại các đoạn chat cũ khi load trang
     function renderHistory() {
         chatBox.innerHTML = "";
-        // Bỏ qua phần tử đầu tiên (system prompt) khi hiển thị giao diện
         for (let i = 1; i < messages.length; i++) {
             const msg = messages[i];
             if (msg.role === "user") {
@@ -126,7 +130,6 @@
         window.scrollTo(0, document.body.scrollHeight);
     }
 
-    // Hàm thêm một dòng chữ vào màn hình console
     function appendLine(text) {
         const line = document.createElement("div");
         line.className = "line";
@@ -136,7 +139,6 @@
         return line;
     }
 
-    // Hàm tạo dấu gạch ngang phân cách các lượt chat
     function appendDivider() {
         const div = document.createElement("div");
         div.className = "divider";
@@ -144,16 +146,15 @@
         chatBox.appendChild(div);
     }
 
-    // 3. Xử lý sự kiện khi người dùng gõ câu lệnh và nhấn ENTER
     userInput.addEventListener("keydown", async function(event) {
         if (event.key === "Enter") {
             const query = userInput.value.trim();
             if (!query) return;
 
-            userInput.value = ""; // Xóa khung nhập ngay lập tức
-            userInput.disabled = true; // Khóa input trong lúc AI xử lý
+            userInput.value = "";
+            userInput.disabled = true;
 
-            // Lệnh đặc biệt để xóa màn hình (giống trên CMD thực tế)
+            // Xử lý các lệnh đặc biệt dạng Console
             if (query.toLowerCase() === 'cls' || query.toLowerCase() === 'clear') {
                 messages = [{ "role": "system", "content": SYSTEM_RULES }];
                 localStorage.setItem("cmd_chat_history", JSON.stringify(messages));
@@ -163,18 +164,30 @@
                 return;
             }
 
-            // Hiển thị câu hỏi của người dùng lên màn hình console
-            appendLine(`C:\\Users\\admin> ${query}`);
+            if (query.toLowerCase() === 'reset-key') {
+                localStorage.removeItem("cf_account_id");
+                localStorage.removeItem("cf_auth_token");
+                alert("Đã xóa cấu hình cũ!");
+                location.reload();
+                return;
+            }
 
-            // Đưa câu hỏi vào bộ nhớ array và cập nhật LocalStorage
+            appendLine(`C:\\Users\\admin> ${query}`);
             messages.push({ "role": "user", "content": query });
             localStorage.setItem("cmd_chat_history", JSON.stringify(messages));
 
-            // Hiển thị trạng thái chờ giống console
             const loadingLine = appendLine("AI đang suy nghĩ...");
 
+            // Kiểm tra lại cấu hình trước khi fetch
+            if (!ACCOUNT_ID || !AUTH_TOKEN) {
+                loadingLine.innerText = "[Lỗi]: Thiếu cấu hình API. Hãy gõ 'reset-key' để cài đặt.";
+                userInput.disabled = false;
+                return;
+            }
+
+            const API_URL = `https://api.cloudflare.com/client/v4/accounts/${ACCOUNT_ID}/ai/run/@cf/google/gemma-4-26b-a4b-it`;
+
             try {
-                // Gọi API Cloudflare Workers AI
                 const response = await fetch(API_URL, {
                     method: "POST",
                     headers: {
@@ -186,45 +199,40 @@
 
                 if (response.status === 200) {
                     const result = await response.json();
-                    
                     if (result.success) {
                         const aiResponse = result.result.choices[0].message.content;
-                        
-                        // Xóa dòng "AI đang suy nghĩ..." đi và in kết quả thật
                         loadingLine.remove();
                         appendLine(`AI: ${aiResponse}`);
                         appendDivider();
 
-                        // Lưu câu trả lời của AI vào bộ nhớ và LocalStorage
                         messages.push({ "role": "assistant", "content": aiResponse });
                         localStorage.setItem("cmd_chat_history", JSON.stringify(messages));
                     } else {
                         loadingLine.innerText = `[Lỗi Cloudflare]: ${JSON.stringify(result.errors)}`;
-                        messages.pop(); // Xóa câu hỏi lỗi khỏi bộ nhớ
+                        messages.pop();
                     }
                 } else {
-                    loadingLine.innerText = `[Lỗi kết nối] Mã lỗi HTTP: ${response.status}`;
+                    loadingLine.innerText = `[Lỗi kết nối] Mã lỗi HTTP: ${response.status}. Hãy kiểm tra lại Key/Token.`;
                     messages.pop();
                 }
             } catch (error) {
-                loadingLine.innerText = `[Đã xảy ra lỗi hệ thống]: ${error.message}`;
+                loadingLine.innerText = `[Đã xảy ra lỗi]: ${error.message}`;
                 messages.pop();
             }
 
-            // Mở khóa lại khung nhập và tự động focus chuột vào
             userInput.disabled = false;
             userInput.focus();
             window.scrollTo(0, document.body.scrollHeight);
         }
     });
 
-    // Luôn luôn focus vào ô nhập lệnh khi bấm bất kỳ đâu trên màn hình web
-    document.addEventListener("click", () => {
-        userInput.focus();
-    });
-
-    // Tự động tải lại lịch sử cũ ngay khi mở trang web lên
-    renderHistory();
+    document.addEventListener("click", () => { userInput.focus(); });
+    
+    // Thực thi kích hoạt
+    checkCredentials();
+    if(ACCOUNT_ID && AUTH_TOKEN) {
+        renderHistory();
+    }
 </script>
 
 </body>

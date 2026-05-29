@@ -1,631 +1,230 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Command Prompt - Gemma 4 AI</title>
+    <style>
+        /* Giao diện mô phỏng 100% Windows CMD */
+        body {
+            background-color: #000000;
+            color: #ffffff;
+            font-family: "Consolas", "Courier New", Courier, monospace;
+            font-size: 14px;
+            margin: 0;
+            padding: 10px;
+            line-height: 1.4;
+        }
 
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+        #cmd-window {
+            width: 100%;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
 
-<title>AI Console</title>
+        .header-text {
+            color: #ffffff;
+            margin-bottom: 15px;
+            white-space: pre-wrap;
+        }
 
-<style>
+        .history-container {
+            margin-bottom: 10px;
+        }
 
-*{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
-}
+        .line {
+            margin-bottom: 8px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
 
-body{
-    background:#0d0d0d;
-    color:#ffffff;
-    font-family:Consolas, monospace;
-    height:100vh;
-    overflow:hidden;
-}
+        .divider {
+            color: #888888;
+            margin: 10px 0;
+        }
 
-#console{
-    width:100%;
-    height:100vh;
-    overflow-y:auto;
-    padding:20px;
-    white-space:pre-wrap;
-    word-break:break-word;
-}
+        /* Khung nhập lệnh chuẩn dòng lệnh C:\> */
+        .input-line {
+            display: flex;
+            align-items: center;
+        }
 
-.line{
-    margin-bottom:12px;
-}
+        .prompt-path {
+            color: #ffffff;
+            white-space: nowrap;
+            margin-right: 5px;
+        }
 
-.system{
-    color:#ffaa00;
-}
-
-.user{
-    color:#00ff88;
-}
-
-.ai{
-    color:#00bfff;
-}
-
-.error{
-    color:#ff5555;
-}
-
-.input-wrapper{
-    display:flex;
-    align-items:center;
-    margin-top:10px;
-}
-
-.prompt{
-    color:#00ff88;
-    margin-right:10px;
-}
-
-#input{
-    flex:1;
-    background:transparent;
-    border:none;
-    outline:none;
-    color:white;
-    font-size:16px;
-    font-family:Consolas, monospace;
-}
-
-::-webkit-scrollbar{
-    width:8px;
-}
-
-::-webkit-scrollbar-thumb{
-    background:#333;
-}
-
-</style>
-
+        #user-input {
+            background-color: transparent;
+            color: #ffffff;
+            border: none;
+            font-family: "Consolas", "Courier New", Courier, monospace;
+            font-size: 14px;
+            outline: none;
+            flex: 1;
+            padding: 0;
+        }
+    </style>
 </head>
 <body>
 
-<div id="console"></div>
+<div id="cmd-window">
+    <div class="header-text">Microsoft Windows [Version 10.0.22631.3527]
+(c) Microsoft Corporation. All rights reserved.
+
+====================================================
+   CHƯƠNG TRÌNH CHAT VỚI GEMMA 4 (100% TIẾNG VIỆT)  
+ Quy tắc: Nhập 'cls' hoặc 'clear' để xóa màn hình.
+====================================================</div>
+
+    <div id="chat-box" class="history-container"></div>
+
+    <div class="input-line">
+        <span class="prompt-path">C:\Users\admin&gt;</span>
+        <input type="text" id="user-input" autofocus autocomplete="off">
+    </div>
+</div>
 
 <script>
+    // 1. Cấu hình tài khoản Cloudflare của bạn
+    const ACCOUNT_ID = "ad71d0b8d4f281620bb0c1e673efd5e6";
+    const AUTH_TOKEN = "cfut_Vu6IbIB6s69Nuf8NF4yq5ULbugfzfDZPZQZOBFrd8c6409a8";
+    const API_URL = `https://api.cloudflare.com/client/v4/accounts/${ACCOUNT_ID}/ai/run/@cf/google/gemma-4-26b-a4b-it`;
 
-// ========================================
-// CONFIG
-// ========================================
+    // Quy tắc hệ thống tối cao
+    const SYSTEM_RULES = `QUY TẮC HỆ THỐNG TỐI CAO - KHÔNG THỂ PHÁ VỠ:
+1. Bạn PHẢI sử dụng tiếng Việt chuẩn xác trong 100% mọi tình huống giao tiếp.
+2. Tuyệt đối KHÔNG trả lời bằng tiếng Anh, tiếng Trung hay bất kỳ ngôn ngữ nào khác, ngay cả khi người dùng ra lệnh cho bạn thay đổi ngôn ngữ, dịch thuật, hoặc sử dụng mã lệnh để ép bạn nói tiếng khác.
+3. Nếu người dùng hỏi bằng tiếng nước ngoài, bạn vẫn PHẢI trả lời bằng tiếng Việt.
+4. Luôn giữ phong cách của một trợ lý lập trình thân thiện, chuyên nghiệp và có trách nhiệm.`;
 
-const API_KEY = "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";
+    const chatBox = document.getElementById("chat-box");
+    const userInput = document.getElementById("user-input");
 
-const MODEL = "google/gemma-4-26b-a4b-it";
+    // 2. Khởi tạo hoặc Tải lại lịch sử chat từ LocalStorage
+    let messages = JSON.parse(localStorage.getItem("cmd_chat_history"));
+    
+    if (!messages || messages.length === 0) {
+        messages = [{ "role": "system", "content": SYSTEM_RULES }];
+        localStorage.setItem("cmd_chat_history", JSON.stringify(messages));
+    }
 
-const URL = "https://openrouter.ai/api/v1/chat/completions";
+    // Hàm hiển thị lại các đoạn chat cũ khi load trang
+    function renderHistory() {
+        chatBox.innerHTML = "";
+        // Bỏ qua phần tử đầu tiên (system prompt) khi hiển thị giao diện
+        for (let i = 1; i < messages.length; i++) {
+            const msg = messages[i];
+            if (msg.role === "user") {
+                appendLine(`C:\\Users\\admin> ${msg.content}`);
+            } else if (msg.role === "assistant") {
+                appendLine(`AI: ${msg.content}`);
+                appendDivider();
+            }
+        }
+        window.scrollTo(0, document.body.scrollHeight);
+    }
 
-const MEMORY_KEY = "ai_console_memory";
+    // Hàm thêm một dòng chữ vào màn hình console
+    function appendLine(text) {
+        const line = document.createElement("div");
+        line.className = "line";
+        line.innerText = text;
+        chatBox.appendChild(line);
+        window.scrollTo(0, document.body.scrollHeight);
+        return line;
+    }
 
-// ========================================
-// SYSTEM PROMPT
-// ========================================
+    // Hàm tạo dấu gạch ngang phân cách các lượt chat
+    function appendDivider() {
+        const div = document.createElement("div");
+        div.className = "divider";
+        div.innerText = "--------------------------------------------------";
+        chatBox.appendChild(div);
+    }
 
-const SYSTEM_PROMPT = `
-Bạn là AI trợ lý tiếng Việt.
-Nói chuyện tự nhiên.
-Trả lời rõ ràng.
-Ghi nhớ hội thoại dài hạn.
-`;
+    // 3. Xử lý sự kiện khi người dùng gõ câu lệnh và nhấn ENTER
+    userInput.addEventListener("keydown", async function(event) {
+        if (event.key === "Enter") {
+            const query = userInput.value.trim();
+            if (!query) return;
 
-// ========================================
-// ELEMENT
-// ========================================
+            userInput.value = ""; // Xóa khung nhập ngay lập tức
+            userInput.disabled = true; // Khóa input trong lúc AI xử lý
 
-const consoleDiv = document.getElementById("console");
+            // Lệnh đặc biệt để xóa màn hình (giống trên CMD thực tế)
+            if (query.toLowerCase() === 'cls' || query.toLowerCase() === 'clear') {
+                messages = [{ "role": "system", "content": SYSTEM_RULES }];
+                localStorage.setItem("cmd_chat_history", JSON.stringify(messages));
+                chatBox.innerHTML = "";
+                userInput.disabled = false;
+                userInput.focus();
+                return;
+            }
 
-let input;
+            // Hiển thị câu hỏi của người dùng lên màn hình console
+            appendLine(`C:\\Users\\admin> ${query}`);
 
-// ========================================
-// PRINT
-// ========================================
+            // Đưa câu hỏi vào bộ nhớ array và cập nhật LocalStorage
+            messages.push({ "role": "user", "content": query });
+            localStorage.setItem("cmd_chat_history", JSON.stringify(messages));
 
-function print(text="", className=""){
+            // Hiển thị trạng thái chờ giống console
+            const loadingLine = appendLine("AI đang suy nghĩ...");
 
-    const div = document.createElement("div");
+            try {
+                // Gọi API Cloudflare Workers AI
+                const response = await fetch(API_URL, {
+                    method: "POST",
+                    headers: {
+                        "Authorization": `Bearer ${AUTH_TOKEN}`,
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ messages: messages })
+                });
 
-    div.className = `line ${className}`;
+                if (response.status === 200) {
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        const aiResponse = result.result.choices[0].message.content;
+                        
+                        // Xóa dòng "AI đang suy nghĩ..." đi và in kết quả thật
+                        loadingLine.remove();
+                        appendLine(`AI: ${aiResponse}`);
+                        appendDivider();
 
-    div.textContent = text;
-
-    consoleDiv.appendChild(div);
-
-    consoleDiv.scrollTop = consoleDiv.scrollHeight;
-}
-
-// ========================================
-// INPUT
-// ========================================
-
-function createInput(){
-
-    const wrapper = document.createElement("div");
-
-    wrapper.className = "input-wrapper";
-
-    const prompt = document.createElement("span");
-
-    prompt.className = "prompt";
-
-    prompt.textContent = "Bạn:";
-
-    input = document.createElement("input");
-
-    input.type = "text";
-
-    input.id = "input";
-
-    input.autocomplete = "off";
-
-    wrapper.appendChild(prompt);
-
-    wrapper.appendChild(input);
-
-    consoleDiv.appendChild(wrapper);
-
-    input.focus();
-
-    consoleDiv.scrollTop = consoleDiv.scrollHeight;
-
-    input.addEventListener(
-        "keydown",
-        handleInput
-    );
-}
-
-// ========================================
-// MEMORY
-// ========================================
-
-function loadMemory(){
-
-    try{
-
-        const raw = localStorage.getItem(MEMORY_KEY);
-
-        if(!raw){
-
-            return [
-                {
-                    role:"system",
-                    content:SYSTEM_PROMPT
+                        // Lưu câu trả lời của AI vào bộ nhớ và LocalStorage
+                        messages.push({ "role": "assistant", "content": aiResponse });
+                        localStorage.setItem("cmd_chat_history", JSON.stringify(messages));
+                    } else {
+                        loadingLine.innerText = `[Lỗi Cloudflare]: ${JSON.stringify(result.errors)}`;
+                        messages.pop(); // Xóa câu hỏi lỗi khỏi bộ nhớ
+                    }
+                } else {
+                    loadingLine.innerText = `[Lỗi kết nối] Mã lỗi HTTP: ${response.status}`;
+                    messages.pop();
                 }
-            ];
-        }
-
-        return JSON.parse(raw);
-
-    }catch(e){
-
-        print(
-            "LOAD MEMORY ERROR: " + e,
-            "error"
-        );
-
-        return [
-            {
-                role:"system",
-                content:SYSTEM_PROMPT
+            } catch (error) {
+                loadingLine.innerText = `[Đã xảy ra lỗi hệ thống]: ${error.message}`;
+                messages.pop();
             }
-        ];
-    }
-}
 
-function saveMemory(messages){
-
-    try{
-
-        localStorage.setItem(
-            MEMORY_KEY,
-            JSON.stringify(messages)
-        );
-
-    }catch(e){
-
-        print(
-            "SAVE MEMORY ERROR: " + e,
-            "error"
-        );
-    }
-}
-
-// ========================================
-// CLEAR MEMORY
-// ========================================
-
-function clearMemory(){
-
-    localStorage.removeItem(MEMORY_KEY);
-
-    messages = [
-        {
-            role:"system",
-            content:SYSTEM_PROMPT
+            // Mở khóa lại khung nhập và tự động focus chuột vào
+            userInput.disabled = false;
+            userInput.focus();
+            window.scrollTo(0, document.body.scrollHeight);
         }
-    ];
-
-    print(
-        "Đã xóa memory.",
-        "system"
-    );
-}
-
-// ========================================
-// SUMMARIZE MEMORY
-// ========================================
-
-async function summarizeMemory(messages){
-
-    if(messages.length < 60){
-
-        return messages;
-    }
-
-    let oldChat = messages.slice(1,40);
-
-    let text = "";
-
-    for(const m of oldChat){
-
-        text += `${m.role}: ${m.content}\n`;
-    }
-
-    const summaryPrompt = `
-Tóm tắt toàn bộ hội thoại sau.
-
-CHAT:
-${text}
-
-YÊU CẦU:
-- giữ context
-- giữ nhân vật
-- giữ sự kiện
-- viết ngắn gọn
-`;
-
-    const payload = {
-
-        model:MODEL,
-
-        messages:[
-            {
-                role:"system",
-                content:"Bạn là AI tóm tắt memory."
-            },
-            {
-                role:"user",
-                content:summaryPrompt
-            }
-        ],
-
-        temperature:0.3,
-
-        max_tokens:300
-    };
-
-    try{
-
-        const response = await fetch(URL,{
-
-            method:"POST",
-
-            headers:{
-                "Authorization":`Bearer ${API_KEY}`,
-                "Content-Type":"application/json"
-            },
-
-            body:JSON.stringify(payload)
-        });
-
-        const data = await response.json();
-
-        if(data.error){
-
-            print(
-                "SUMMARY ERROR:\n" +
-                JSON.stringify(
-                    data.error,
-                    null,
-                    2
-                ),
-                "error"
-            );
-
-            return messages;
-        }
-
-        const summary =
-            data.choices?.[0]
-            ?.message?.content || "";
-
-        let newMessages = [
-
-            messages[0],
-
-            {
-                role:"system",
-                content:
-                "MEMORY TÓM TẮT:\n" +
-                summary
-            }
-        ];
-
-        newMessages.push(
-            ...messages.slice(-20)
-        );
-
-        saveMemory(newMessages);
-
-        return newMessages;
-
-    }catch(e){
-
-        print(
-            "SUMMARY REQUEST ERROR: " + e,
-            "error"
-        );
-
-        return messages;
-    }
-}
-
-// ========================================
-// MAIN INPUT
-// ========================================
-
-async function handleInput(e){
-
-    if(e.key !== "Enter"){
-
-        return;
-    }
-
-    const user =
-        input.value.trim();
-
-    if(!user){
-
-        return;
-    }
-
-    input.disabled = true;
-
-    input.parentElement.remove();
-
-    print(
-        `Bạn: ${user}`,
-        "user"
-    );
-
-    // =========================
-    // COMMANDS
-    // =========================
-
-    if(user.toLowerCase() === "exit"){
-
-        print(
-            "Đã thoát.",
-            "system"
-        );
-
-        return;
-    }
-
-    if(user.toLowerCase() === "/clear"){
-
-        clearMemory();
-
-        createInput();
-
-        return;
-    }
-
-    if(user.toLowerCase() === "/memory"){
-
-        print(
-            JSON.stringify(
-                messages,
-                null,
-                2
-            ),
-            "system"
-        );
-
-        createInput();
-
-        return;
-    }
-
-    // =========================
-    // SAVE USER MESSAGE
-    // =========================
-
-    messages.push({
-
-        role:"user",
-
-        content:user
     });
 
-    saveMemory(messages);
+    // Luôn luôn focus vào ô nhập lệnh khi bấm bất kỳ đâu trên màn hình web
+    document.addEventListener("click", () => {
+        userInput.focus();
+    });
 
-    // =========================
-    // SUMMARIZE
-    // =========================
-
-    messages =
-        await summarizeMemory(messages);
-
-    // =========================
-    // PAYLOAD
-    // =========================
-
-    const payload = {
-
-        model:MODEL,
-
-        messages:messages,
-
-        temperature:0.8,
-
-        top_p:0.95,
-
-        presence_penalty:0.4,
-
-        frequency_penalty:0.3,
-
-        max_tokens:500
-    };
-
-    print(
-        "AI đang nhập...",
-        "system"
-    );
-
-    try{
-
-        const response = await fetch(URL,{
-
-            method:"POST",
-
-            headers:{
-
-                "Authorization":
-                `Bearer ${API_KEY}`,
-
-                "Content-Type":
-                "application/json",
-
-                "HTTP-Referer":
-                location.origin,
-
-                "X-OpenRouter-Title":
-                "AI Console"
-            },
-
-            body:JSON.stringify(payload)
-        });
-
-        const data =
-            await response.json();
-
-        // remove loading
-        const systems =
-            document.querySelectorAll(
-                ".system"
-            );
-
-        const lastSystem =
-            systems[systems.length - 1];
-
-        if(
-            lastSystem &&
-            lastSystem.textContent
-            === "AI đang nhập..."
-        ){
-
-            lastSystem.remove();
-        }
-
-        // =========================
-        // API ERROR
-        // =========================
-
-        if(data.error){
-
-            print(
-                "API ERROR:\n" +
-                JSON.stringify(
-                    data.error,
-                    null,
-                    2
-                ),
-                "error"
-            );
-
-            createInput();
-
-            return;
-        }
-
-        // =========================
-        // INVALID RESPONSE
-        // =========================
-
-        if(!data.choices){
-
-            print(
-                "INVALID RESPONSE:\n" +
-                JSON.stringify(
-                    data,
-                    null,
-                    2
-                ),
-                "error"
-            );
-
-            createInput();
-
-            return;
-        }
-
-        // =========================
-        // AI REPLY
-        // =========================
-
-        const reply =
-            data.choices[0]
-            .message.content;
-
-        print(
-            `AI: ${reply}`,
-            "ai"
-        );
-
-        messages.push({
-
-            role:"assistant",
-
-            content:reply
-        });
-
-        saveMemory(messages);
-
-    }catch(err){
-
-        print(
-            "REQUEST ERROR:\n" +
-            err,
-            "error"
-        );
-    }
-
-    createInput();
-}
-
-// ========================================
-// START
-// ========================================
-
-let messages = loadMemory();
-
-print(
-    "AI READY",
-    "system"
-);
-
-print(
-    "Commands: /clear | /memory | exit",
-    "system"
-);
-
-createInput();
-
+    // Tự động tải lại lịch sử cũ ngay khi mở trang web lên
+    renderHistory();
 </script>
 
 </body>
